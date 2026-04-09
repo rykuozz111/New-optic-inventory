@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Login</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+  <style>
+    body{
+      margin:0;
+      font-family:sans-serif;
+      background: linear-gradient(135deg,#4facfe,#00f2fe);
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      height:100vh;
+    }
+
+    .login-box{
+      background:white;
+      padding:25px;
+      border-radius:20px;
+      width:90%;
+      max-width:320px;
+      text-align:center;
+      box-shadow:0 10px 30px rgba(0,0,0,0.2);
+    }
+
+    h2{
+      margin-bottom:20px;
+    }
+
+    input{
+      width:100%;
+      padding:12px;
+      margin:8px 0;
+      border-radius:10px;
+      border:1px solid #ddd;
+    }
+
+    button{
+      width:100%;
+      padding:12px;
+      border:none;
+      border-radius:10px;
+      background:#007aff;
+      color:white;
+      font-weight:bold;
+      margin-top:10px;
+    }
+
+    button:active{
+      transform:scale(0.97);
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="login-box">
+  <h2>🔐 Нэвтрэх</h2>
+
+  <input id="username" placeholder="Нэр">
+  <input id="password" type="password" placeholder="Код">
+
+  <button onclick="login()">Нэвтрэх</button>
+</div>
+
+<script>
+
+const users = [
+  { username: "99862122", password: "0000", role: "admin" },
+  { username: "99244619", password: "1111", role: "employee" },
+  { username: "Ihree", password: "2222", role: "employee" },
+  { username: "88130998", password: "3333", role: "employee" },
+  { username: "99185046", password: "4444", role: "employee" }
+];
+
+function login(){
+  let u = document.getElementById("username").value.trim();
+  let p = document.getElementById("password").value.trim();
+
+  let user = users.find(x => x.username === u && x.password === p);
+
+  if(!user){
+    alert("Буруу нэр эсвэл код!");
+    return;
+  }
+
+  // 🔥 хадгална
+  localStorage.setItem("auth", "true");
+  localStorage.setItem("role", user.role);
+  localStorage.setItem("user", user.username);
+
+  // 👉 dashboard руу
+  window.location.href = "dashboard.html";
+}
+
+</script>
+
+</body>
+</html>

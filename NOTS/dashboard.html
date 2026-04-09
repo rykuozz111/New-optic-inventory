@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<head>
+    <title>Inventory</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+
+<h1>New Optic Бараа тооллого</h1>
+
+<div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; padding: 0 10px;">
+    <button id="addBtn" onclick="openModal()" style="margin: 0; flex: 1; min-width: 140px;">➕ Бараа нэмэх</button>
+    <button id="excelBtn" onclick="exportToExcel()" style="margin: 0; flex: 1; min-width: 140px;">📥 Excel татах</button>
+    <button id="historyBtn" onclick="showHistory()" style="background: #5856d6; margin: 0; flex: 1; min-width: 140px;">📜 Түүх харах</button>
+</div>
+
+<!-- MODAL -->
+<div id="modal" class="modal" style="display:none;">
+  <div class="modal-content" style="max-height: 85vh; overflow-y: auto; box-sizing: border-box; padding: 20px;">
+    <h3>Бараа нэмэх</h3>
+
+    <input id="name" placeholder="Нэр" style="width:100%; box-sizing:border-box;">
+    <input id="code" placeholder="Код" style="width:100%; box-sizing:border-box;">
+    <input id="price" placeholder="Үнэ" style="width:100%; box-sizing:border-box;">
+    
+    <div id="colorContainer">
+      <div class="color-input-group" style="display:flex; gap:5px; margin-bottom:10px;">
+        <input type="text" class="variant-color" placeholder="Өнгө" style="flex:1; padding:10px;">
+        <button type="button" onclick="this.parentElement.remove()" style="background:#ff3b30; color:white; border:none; padding:10px; border-radius:5px;">X</button>
+      </div>
+    </div>
+
+    <button type="button" onclick="addColorInput()" style="width:100%; background:#007aff; color:white; border:none; padding:10px; border-radius:5px; margin-bottom:15px; cursor:pointer;">+ Өнгө нэмэх</button>
+
+    <select id="cat" style="width:100%; box-sizing:border-box; margin-bottom:15px;">
+      <option>Рам</option>
+      <option>Нарны шил</option>
+      <option>Линз</option>
+    </select>
+
+    <div style="display:flex; gap:10px;">
+      <button onclick="addItem()" style="flex:1; background:#34c759; color:white; padding:12px; border:none; border-radius:8px; font-weight:bold;">Нэмэх</button>
+      <button onclick="closeModal()" style="flex:1; background:#8e8e93; color:white; padding:12px; border:none; border-radius:8px; font-weight:bold;">Хаах</button>
+    </div>
+  </div>
+</div>
+
+<div id="detailModal" class="modal" style="display:none;">
+  <div id="detailContent" class="modal-content">
+    </div>
+</div>
+
+
+
+<div class="top-bar" style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 20px; padding: 0 10px;">
+    <select id="category" onchange="showItems()" style="padding: 10px; border-radius: 8px; border: 1px solid #ddd; height: 45px; flex: 1; min-width: 100px;">
+        <option>Рам</option>
+        <option>Нарны шил</option>
+        <option>Линз</option>
+    </select>
+
+    <input id="search" placeholder="Кодоор хайх..." oninput="showItems()" style="padding: 10px; border-radius: 8px; border: 1px solid #ddd; height: 45px; flex: 2; min-width: 150px; box-sizing: border-box;">
+
+    <button onclick="showItems()" style="padding: 0 20px; border-radius: 8px; background: #007aff; color: white; border: none; cursor: pointer; height: 45px; margin: 0;">Харах</button>
+</div>
+
+<div id="items" class="grid"></div>
+
+<script src="app.js"></script>
+
+<div id="confirmModal" class="modal" style="display:none;">
+  <div class="modal-content" style="text-align: center;">
+    <h3 id="confirmTitle" style="margin-bottom: 20px;">Итгэлтэй байна уу?</h3>
+    <div class="button-group">
+      <button id="confirmYes" style="background: #007aff;">Тийм</button>
+      <button onclick="closeConfirm()" style="background: #ff3b30;">Үгүй</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
