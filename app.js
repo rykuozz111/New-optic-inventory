@@ -1,21 +1,40 @@
-// AUTH CHECK
-if(localStorage.getItem("auth") !== "true"){
-  window.location.href = "index.html";
+db.ref('inventory/history').limitToLast(200).on('value', (snapshot) => {
+    const data = snapshot.val();
+    if (data) {
+        // Firebase Object-ийг Array болгож хөрвүүлээд урвуу дараалалд оруулна
+        history = Object.values(data).reverse();
+    } else {
+        history = [];
+    }
+    // Хэрэв одоо түүхийн хуудсан дээр байвал дэлгэцийг шинэчилнэ
+    if (document.getElementById("historyTable")) {
+        showHistory();
+    }
+});
+
+// dashboard.html доторх script-ийн хамгийн дээр:
+if (localStorage.getItem("auth") !== "true") {
+    window.location.href = "index.html";
 }
 
-// LOAD DATA
-let items = JSON.parse(localStorage.getItem("items")) || [];
-let history = JSON.parse(localStorage.getItem("inventory_history")) || [];
+// 1. Firebase-ээс мэдээлэл унших (LocalStorage-ийн оронд)
+let items = [];
+let history = [];
+
+db.ref('inventory/items').on('value', (snapshot) => {
+    items = snapshot.val() || [];
+    showItems();
+});
 
 function saveHistory(entry) {
-    history.unshift(entry); // Шинэ үйлдлийг эхэнд нь нэмнэ
-    if (history.length > 200) history.pop(); // Сүүлийн 200-г л хадгална
-    localStorage.setItem("inventory_history", JSON.stringify(history));
+    // ❌ localStorage.setItem-ийг устгаад үүнийг тавь:
+    db.ref('inventory/history').push(entry); 
 }
 
 // SAVE
 function save() {
-    localStorage.setItem("items", JSON.stringify(items));
+    // LocalStorage биш Firebase рүү хадгална
+    db.ref('inventory/items').set(items);
 }
 
 // OPEN DETAIL
@@ -333,31 +352,21 @@ function deleteItem(code) {
 }
 
 function saveMonthlyReport(){
-  let reports = JSON.parse(localStorage.getItem("reports")) || [];
+    let now = new Date();
+    let month = now.toISOString().slice(0,7); 
 
-  let now = new Date();
-  let month = now.toISOString().slice(0,7); // 2026-04
+    let snapshot = items.map(i => ({
+        name: i.name,
+        code: i.code,
+        variants: i.variants || [] // variants-аар нь хадгалах нь зөв
+    }));
 
-  // аль хэдийн хадгалсан эсэх
-  if(reports.some(r => r.month === month)){
-    alert("Энэ сарын тайлан аль хэдийн хадгалагдсан!");
-    return;
-  }
-
-  let snapshot = items.map(i => ({
-    name: i.name,
-    code: i.code,
-    branches: i.branches
-  }));
-
-  reports.push({
-    month,
-    data: snapshot
-  });
-
-  localStorage.setItem("reports", JSON.stringify(reports));
-
-  alert("Сарын тайлан хадгалагдлаа!");
+    db.ref('inventory/reports/' + month).set({
+        month: month,
+        data: snapshot
+    }).then(() => {
+        alert("Сарын тайлан серверт хадгалагдлаа!");
+    });
 }
 
 function viewReports(){
@@ -554,19 +563,23 @@ showItems();
 
 function showHistory() {
     let div = document.getElementById("items");
+    
+    // ХЭРЭВ history нь Array биш бол Array болгож хувиргах (Firebase-д зориулсан хамгаалалт)
+    let historyList = Array.isArray(history) ? history : Object.values(history || {});
+
     div.innerHTML = `
         <div style="padding: 10px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <h2 style="margin:0; font-size: 1.2rem;">Үйлдлийн түүх</h2>
                 <div style="display: flex; gap: 5px;">
-                    <button onclick="printHistory()" style="background: #5856d6; padding: 8px 12px; font-size: 12px;">🖨 Хэвлэх</button>
-                    <button onclick="clearHistory()" style="background: #ff3b30; padding: 8px 12px; font-size: 12px;">🗑 Цэвэрлэх</button>
+                    <button onclick="printHistory()" style="background: #5856d6; color:white; border:none; border-radius:8px; padding: 8px 12px; font-size: 12px; cursor:pointer;">🖨 Хэвлэх</button>
+                    <button onclick="clearHistory()" style="background: #ff3b30; color:white; border:none; border-radius:8px; padding: 8px 12px; font-size: 12px; cursor:pointer;">🗑 Цэвэрлэх</button>
                 </div>
             </div>
             
             <div id="historyTable" style="display: flex; flex-direction: column; gap: 12px;">
-                ${history.length === 0 ? '<p style="text-align:center; color:#888;">Одоогоор түүх байхгүй байна.</p>' : ''}
-                ${history.map(h => `
+                ${historyList.length === 0 ? '<p style="text-align:center; color:#888;">Одоогоор түүх байхгүй байна.</p>' : ''}
+                ${historyList.map(h => `
                     <div style="background: white; border-radius: 12px; padding: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border-left: 5px solid ${h.action === 'Нэмсэн' ? '#34c759' : '#ff3b30'};">
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
                             <span style="font-weight: bold; font-size: 14px; color: #333;">${h.user}</span>
@@ -584,7 +597,7 @@ function showHistory() {
                         </div>
 
                         <div style="margin-bottom: 8px; font-size: 13px; color: #007aff; font-weight: bold;">
-                            ${h.itemPrice ? h.itemPrice + '₮' : ''} 
+                            ${h.itemPrice ? h.itemPrice.toLocaleString() + '₮' : ''} 
                         </div>
 
                         <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -598,7 +611,7 @@ function showHistory() {
                     </div>
                 `).join('')}
             </div>
-            <button onclick="showItems()" style="margin-top: 25px; width: 100%; background: #8e8e93; padding: 12px;">⬅ Буцах</button>
+            <button onclick="showItems()" style="margin-top: 25px; width: 100%; background: #8e8e93; color:white; border:none; border-radius:12px; padding: 12px; font-weight:bold; cursor:pointer;">⬅ Буцах</button>
         </div>
     `;
 }
@@ -677,10 +690,9 @@ function printHistory() {
 }
 
 function clearHistory() {
-    if (confirm("Түүхийг бүрэн устгаж, шинээр эхлүүлэх үү? (Татаж авсныхаа дараа устгана уу)")) {
-        history = [];
-        localStorage.setItem("inventory_history", JSON.stringify(history));
-        showHistory(); // Дэлгэцийг шинэчлэх
+    if (confirm("Түүхийг бүрэн устгах уу?")) {
+        db.ref('inventory/history').remove();
+        showHistory();
     }
 }
 
@@ -717,3 +729,15 @@ function addColorInput() {
     `;
     container.appendChild(div);
 }
+
+// app.js-ийн хамгийн доор
+window.onload = function() {
+    checkRole();
+    showItems();
+};
+
+// app.js-ийн хамгийн доор
+document.addEventListener("DOMContentLoaded", function() {
+    checkRole();
+    showItems();
+});

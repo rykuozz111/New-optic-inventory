@@ -5,7 +5,24 @@
     <title>Inventory</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
-</head>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+    <script>
+      const firebaseConfig = {
+        apiKey: "AIzaSyA_J_PBI0a5Hn3axkeNN8B7sDQV1Ms87qY",
+        authDomain: "newopticinventory-b7c95.firebaseapp.com",
+        databaseURL: "https://newopticinventory-b7c95-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "newopticinventory-b7c95",
+        storageBucket: "newopticinventory-b7c95.firebasestorage.app",
+        messagingSenderId: "845838121875",
+        appId: "1:845838121875:web:401f7cd0339f78d65c4666"
+      };
+      firebase.initializeApp(firebaseConfig);
+      var db = firebase.database(); 
+    </script>
+    </head>
 <body>
 
 <h1>New Optic Бараа тооллого</h1>
@@ -68,8 +85,6 @@
 
 <div id="items" class="grid"></div>
 
-<script src="app.js"></script>
-
 <div id="confirmModal" class="modal" style="display:none;">
   <div class="modal-content" style="text-align: center;">
     <h3 id="confirmTitle" style="margin-bottom: 20px;">Итгэлтэй байна уу?</h3>
@@ -79,6 +94,8 @@
     </div>
   </div>
 </div>
+
+<script src="app.js"></script>
 
 </body>
 </html>
