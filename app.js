@@ -1,30 +1,34 @@
-db.ref('inventory/history').limitToLast(200).on('value', (snapshot) => {
-    const data = snapshot.val();
-    if (data) {
-        // Firebase Object-ийг Array болгож хөрвүүлээд урвуу дараалалд оруулна
-        history = Object.values(data).reverse();
+// 🔥 Хамгийн дээр нь нэмэх хэсэг
+firebase.auth().onAuthStateChanged((user) => {
+    if (user) {
+        console.log("Firebase нэвтрэлт амжилттай!");
+        // Нэвтэрсэн үед датагаа татаж эхэлнэ
+        loadFirebaseData(); 
     } else {
-        history = [];
-    }
-    // Хэрэв одоо түүхийн хуудсан дээр байвал дэлгэцийг шинэчилнэ
-    if (document.getElementById("historyTable")) {
-        showHistory();
+        // Хэрэв Firebase нэвтрэлт байхгүй бол Login руу буцаана
+        if (localStorage.getItem("auth") !== "true") {
+            window.location.href = "index.html";
+        }
     }
 });
 
-// dashboard.html доторх script-ийн хамгийн дээр:
-if (localStorage.getItem("auth") !== "true") {
-    window.location.href = "index.html";
+// Дата татах функц
+function loadFirebaseData() {
+    // Бараа татах
+    db.ref('inventory/items').on('value', (snapshot) => {
+        items = snapshot.val() || [];
+        showItems();
+    });
+
+    // Түүх татах
+    db.ref('inventory/history').limitToLast(200).on('value', (snapshot) => {
+        const data = snapshot.val();
+        history = data ? Object.values(data).reverse() : [];
+        if (document.getElementById("historyTable")) {
+            showHistory();
+        }
+    });
 }
-
-// 1. Firebase-ээс мэдээлэл унших (LocalStorage-ийн оронд)
-let items = [];
-let history = [];
-
-db.ref('inventory/items').on('value', (snapshot) => {
-    items = snapshot.val() || [];
-    showItems();
-});
 
 function saveHistory(entry) {
     // ❌ localStorage.setItem-ийг устгаад үүнийг тавь:
