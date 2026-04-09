@@ -1,3 +1,6 @@
+let items = []; // Firebase-ээс дата ирэх хүртэл хоосон байна
+let history = [];
+
 // 🔥 Хамгийн дээр нь нэмэх хэсэг
 firebase.auth().onAuthStateChanged((user) => {
     if (user) {
@@ -14,14 +17,23 @@ firebase.auth().onAuthStateChanged((user) => {
 
 // Дата татах функц
 function loadFirebaseData() {
-    // Бараа татах
+    console.log("Дата татаж байна...");
+    
+    // Бараа татах хэсэг
     db.ref('inventory/items').on('value', (snapshot) => {
-        items = snapshot.val() || [];
-        showItems();
+        const data = snapshot.val();
+        if (data) {
+            items = data; // 🔥 Ирсэн датаг global items-д оноож байна
+            console.log("Дата ирлээ:", items);
+            showItems();   // 🔥 Дата ирсний дараа л дэлгэцэнд зурна
+        } else {
+            items = [];
+            showItems();
+        }
     });
 
-    // Түүх татах
-    db.ref('inventory/history').limitToLast(200).on('value', (snapshot) => {
+    // Түүх татах хэсэг
+    db.ref('inventory/history').limitToLast(100).on('value', (snapshot) => {
         const data = snapshot.val();
         history = data ? Object.values(data).reverse() : [];
         if (document.getElementById("historyTable")) {
@@ -562,9 +574,6 @@ function checkRole(){
   }
 }
 
-checkRole();
-showItems();
-
 function showHistory() {
     let div = document.getElementById("items");
     
@@ -734,14 +743,14 @@ function addColorInput() {
     container.appendChild(div);
 }
 
-// app.js-ийн хамгийн доор
-window.onload = function() {
-    checkRole();
-    showItems();
-};
-
-// app.js-ийн хамгийн доор
-document.addEventListener("DOMContentLoaded", function() {
-    checkRole();
-    showItems();
+firebase.auth().onAuthStateChanged((user) => {
+    if (user) {
+        console.log("Firebase нэвтрэлт амжилттай!");
+        checkRole(); // 👈 Эрхийг энд шалгана
+        loadFirebaseData(); // 👈 Энэ функц дотор showItems() байгаа учраас давхар дуудах шаардлагагүй
+    } else {
+        if (localStorage.getItem("auth") !== "true") {
+            window.location.href = "index.html";
+        }
+    }
 });
