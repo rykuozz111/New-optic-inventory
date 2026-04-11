@@ -767,3 +767,101 @@ function addColorInput() {
     `;
     container.appendChild(div);
 }
+
+document.addEventListener("DOMContentLoaded", function() {
+    const userRole = localStorage.getItem("role");
+
+    // Зөвхөн Админ үед харагдах элементүүд
+    if (userRole === "admin") {
+        const adminElements = ["addBtn", "excelBtn", "historyBtn", "userViewBtn"];
+        adminElements.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = "block";
+        });
+        
+        // Админ байсан ч панелыг анхнаасаа хаалттай (none) байлгах нь зөв
+        const panel = document.getElementById("adminPanel");
+        if (panel) panel.style.display = "none"; 
+    } else {
+        // Ажилтан бол бүгдийг нуух
+        const adminElements = ["addBtn", "excelBtn", "historyBtn", "userViewBtn", "adminPanel"];
+        adminElements.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = "none";
+        });
+    }
+});
+
+function loadUsers() {
+    // Хэрэв контейнер байхгүй бол функцыг зогсоох (алдаанаас сэргийлнэ)
+    const container = document.getElementById("userList");
+    if (!container) return;
+
+    console.log("Хэрэглэгчдийн жагсаалтыг татаж байна...");
+
+    firebase.database().ref('users').on('value', (snapshot) => {
+        container.innerHTML = "";
+        const data = snapshot.val();
+
+        if (!data) {
+            container.innerHTML = "<p style='text-align:center; color:#888;'>Бүртгэлтэй ажилтан алга.</p>";
+            return;
+        }
+
+        snapshot.forEach((childSnapshot) => {
+            const userData = childSnapshot.val();
+            const userId = childSnapshot.key;
+            
+            const card = document.createElement("div");
+            card.style.cssText = `
+                background: white;
+                padding: 15px;
+                border-radius: 12px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+                margin-bottom: 10px;
+            `;
+            
+            card.innerHTML = `
+                <div>
+                    <div style="font-weight: bold; color: #1d1d1f;">${userData.username || 'Нэргүй'}</div>
+                    <div style="font-size: 11px; color: #8e8e93;">${userData.email || ''}</div>
+                </div>
+                <button onclick="deleteUser('${userId}', '${userData.username}')" 
+                        style="background: #ff3b30; color: white; border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: bold;">
+                    Устгах
+                </button>
+            `;
+            container.appendChild(card);
+        });
+    });
+}
+
+// Хэрэглэгчийг Database-аас устгах функц
+function deleteUser(id, name) {
+    if (confirm(`'${name}' ажилтныг бүртгэлээс устгах уу?`)) {
+        firebase.database().ref('users/' + id).remove()
+            .then(() => alert("Амжилттай устгагдлаа."))
+            .catch((error) => alert("Алдаа гарлаа: " + error.message));
+    }
+}
+
+// Панелыг нээж хаах функц
+function toggleAdminPanel() {
+    const panel = document.getElementById("adminPanel");
+    if (!panel) return;
+
+    if (panel.style.display === "none" || panel.style.display === "") {
+        panel.style.display = "block";
+        loadUsers(); // Нээх үед датаг Firebase-аас татна
+        
+        // Зөөлөн гүйлгэж харуулах
+        setTimeout(() => {
+            panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
+    } else {
+        panel.style.display = "none";
+    }
+}

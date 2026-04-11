@@ -1,126 +1,221 @@
 <!DOCTYPE html>
-<html>
+<html lang="mn">
 <head>
-  <title>Login</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta charset="UTF-8">
+    <title>New Optic | Нэвтрэх</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
 
-  <script>
-   const firebaseConfig = {
-  apiKey: "AIzaSyA_J_PBI0a5Hn3axkeNN8B7sDQV1Ms87qY",
-  authDomain: "newopticinventory-b7c95.firebaseapp.com",
-  databaseURL: "https://newopticinventory-b7c95-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "newopticinventory-b7c95",
-  storageBucket: "newopticinventory-b7c95.firebasestorage.app",
-  messagingSenderId: "845838121875",
-  appId: "1:845838121875:web:401f7cd0339f78d65c4666",
-  measurementId: "G-9GWK3H1NPH"
-};
-    
-    // Холболтыг эхлүүлэх
-    if (!firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
-    }
-  </script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyA_J_PBI0a5Hn3axkeNN8B7sDQV1Ms87qY",
+            authDomain: "newopticinventory-b7c95.firebaseapp.com",
+            databaseURL: "https://newopticinventory-b7c95-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "newopticinventory-b7c95",
+            storageBucket: "newopticinventory-b7c95.firebasestorage.app",
+            messagingSenderId: "845838121875",
+            appId: "1:845838121875:web:401f7cd0339f78d65c4666",
+            measurementId: "G-9GWK3H1NPH"
+        };
+        
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+    </script>
 
-  <style>
-    body{
-      margin:0;
-      font-family:sans-serif;
-      background: linear-gradient(135deg,#4facfe,#00f2fe);
-      display:flex;
-      justify-content:center;
-      align-items:center;
-      height:100vh;
-    }
-    .login-box{
-      background:white;
-      padding:25px;
-      border-radius:20px;
-      width:90%;
-      max-width:320px;
-      text-align:center;
-      box-shadow:0 10px 30px rgba(0,0,0,0.2);
-    }
-    h2{ margin-bottom:20px; }
-    input{
-      width:100%;
-      padding:12px;
-      margin:8px 0;
-      border-radius:10px;
-      border:1px solid #ddd;
-      box-sizing: border-box; /* Input-ийг хайрцагнаас гаргахгүй */
-    }
-    button{
-      width:100%;
-      padding:12px;
-      border:none;
-      border-radius:10px;
-      background:#007aff;
-      color:white;
-      font-weight:bold;
-      margin-top:10px;
-      cursor: pointer;
-    }
-    button:active{ transform:scale(0.97); }
-  </style>
+    <style>
+        :root {
+            --primary: #007aff;
+            --bg: #f5f7fa;
+            --text: #1d1d1f;
+        }
+
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: var(--bg);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: var(--text);
+        }
+
+        .login-box {
+            background: white;
+            padding: 40px 30px;
+            border-radius: 24px;
+            width: 90%;
+            max-width: 360px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+        }
+
+        .logo-area h1 {
+            font-size: 24px;
+            font-weight: 800;
+            margin: 0 0 10px 0;
+            letter-spacing: -0.5px;
+            color: var(--primary);
+        }
+
+        .logo-area p {
+            font-size: 14px;
+            color: #86868b;
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 5px;
+            margin-left: 5px;
+            color: #48484a;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px 16px;
+            border-radius: 12px;
+            border: 1px solid #d2d2d7;
+            box-sizing: border-box;
+            font-size: 16px;
+            transition: all 0.2s ease;
+            background: #fbfbfd;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: white;
+            box-shadow: 0 0 0 4px rgba(0,122,255,0.1);
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            background: var(--primary);
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            margin-top: 20px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .btn-secondary {
+            width: 100%;
+            background: none;
+            border: none;
+            color: var(--primary);
+            font-size: 14px;
+            margin-top: 15px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .btn-primary:active { opacity: 0.8; transform: translateY(1px); }
+        
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+    </style>
 </head>
-
 <body>
 
-<div class="login-box">
-  <h2>🔐 Нэвтрэх</h2>
-  <input id="email" placeholder="Нэвтрэх нэр (жишээ нь: admin)">
-  <input id="password" type="password" placeholder="Нууц үг">
-  <button onclick="login()">Нэвтрэх</button>
-  <button onclick="register()">Бүртгүүлэх</button>
+<div class="login-box" id="loginForm">
+    <div class="logo-area">
+        <h1>NEW OPTIC</h1>
+        <p>Тооллогын систэм</p>
+    </div>
+
+    <div class="input-group">
+        <label>Хэрэглэгчийн нэр</label>
+        <input id="email" type="text" placeholder="Утасны дугаар" autocomplete="username">
+    </div>
+
+    <div class="input-group">
+        <label>Нууц үг</label>
+        <input id="password" type="password" placeholder="••••••••" autocomplete="current-password">
+    </div>
+
+    <button class="btn-primary" id="loginBtn" onclick="login()">Нэвтрэх</button>
+    <button class="btn-secondary" onclick="register()">Шинэ хэрэглэгч бүртгэх</button>
 </div>
 
 <script>
+function login() {
+    const btn = document.getElementById("loginBtn");
+    const userField = document.getElementById("email");
+    const passField = document.getElementById("password");
+    
+    let username = userField.value.trim().toLowerCase();
+    let password = passField.value.trim();
 
-function login(){
-  let username = document.getElementById("email").value.trim().toLowerCase();
-  let password = document.getElementById("password").value.trim();
+    if(!username || !password) {
+        alert("Мэдээллээ бүрэн бөглөнө үү!");
+        return;
+    }
 
-  // 💡 Хэрэглэгч зөвхөн 'admin' гэж бичвэл '@newoptic.mn' залгаж имэйл болгоно
-  // Хэрэв аль хэдийн @ орсон байвал хэвээр нь үлдээх логик
-  let email = username.includes("@") ? username : username + "@newoptic.mn";
+    btn.innerText = "Уншиж байна...";
+    btn.classList.add("loading");
 
-  firebase.auth().signInWithEmailAndPassword(email, password)
+    let email = username.includes("@") ? username : username + "@newoptic.mn";
+
+    firebase.auth().signInWithEmailAndPassword(email, password)
     .then((userCredential) => {
-      localStorage.setItem("auth", "true");
-      localStorage.setItem("user", username); // Дэлгэц дээр харагдах нэр
+        localStorage.setItem("auth", "true");
+        localStorage.setItem("user", username);
 
-      // 🔥 ЗӨВХӨН ЭНЭ USERNAME Л АДМИН БАЙНА
-      const adminUser = "99862122"; 
+        // Админ шалгах
+        const adminUser = "99862122"; 
+        localStorage.setItem("role", username === adminUser ? "admin" : "employee");
 
-      if(username === adminUser){
-        localStorage.setItem("role", "admin");
-      } else {
-        localStorage.setItem("role", "employee");
-      }
-
-      window.location.href = "dashboard.html";
+        window.location.href = "dashboard.html";
     })
     .catch((error) => {
-      alert("Нэвтрэх нэр эсвэл нууц үг буруу байна!");
+        btn.innerText = "Нэвтрэх";
+        btn.classList.remove("loading");
+        alert("Нэвтрэх нэр эсвэл нууц үг буруу байна!");
     });
 }
 
-function register(){
-  let username = document.getElementById("email").value.trim().toLowerCase();
-  let password = document.getElementById("password").value.trim();
-  
-  let email = username.includes("@") ? username : username + "@newoptic.mn";
+function register() {
+    let username = document.getElementById("email").value.trim().toLowerCase();
+    let password = document.getElementById("password").value.trim();
+    
+    if(!username || password.length < 6) {
+        alert("Нэр оруулж, нууц үг хамгийн багадаа 6 оронтой байх ёстой!");
+        return;
+    }
 
-  firebase.auth().createUserWithEmailAndPassword(email, password)
-    .then(() => {
-      alert(username + " амжилттай бүртгэгдлээ!");
+    let email = username.includes("@") ? username : username + "@newoptic.mn";
+
+    firebase.auth().createUserWithEmailAndPassword(email, password)
+    .then((userCredential) => {
+        // Database-д хэрэглэгчийн мэдээллийг хадгалах
+        firebase.database().ref('users/' + userCredential.user.uid).set({
+            username: username,
+            email: email,
+            role: "employee", // Анх бүртгүүлэхэд ажилтан эрхтэй байна
+            createdAt: new Date().toISOString()
+        });
+        
+        alert("Ажилтан: '" + username + "' амжилттай бүртгэгдлээ!");
     })
     .catch((error) => {
-      alert(error.message);
+        alert("Бүртгэхэд алдаа гарлаа: " + error.message);
     });
 }
 
