@@ -15,30 +15,30 @@ firebase.auth().onAuthStateChanged((user) => {
     }
 });
 
-// Дата татах функц
 function loadFirebaseData() {
     console.log("Дата татаж байна...");
     
-    // Бараа татах хэсэг
     db.ref('inventory/items').on('value', (snapshot) => {
         const data = snapshot.val();
+
         if (data) {
-            items = data; // 🔥 Ирсэн датаг global items-д оноож байна
-            console.log("Дата ирлээ:", items);
-            showItems();   // 🔥 Дата ирсний дараа л дэлгэцэнд зурна
+            
+            items = Object.keys(data).map(key => ({
+                ...data[key],
+                id: key 
+            }));
+
+            console.log("Дата шинэчлэгдлээ:", items);
+            showItems();
         } else {
             items = [];
             showItems();
         }
     });
 
-    // Түүх татах хэсэг
     db.ref('inventory/history').limitToLast(100).on('value', (snapshot) => {
         const data = snapshot.val();
         history = data ? Object.values(data).reverse() : [];
-        if (document.getElementById("historyTable")) {
-            showHistory();
-        }
     });
 }
 
@@ -47,29 +47,29 @@ function saveHistory(entry) {
     db.ref('inventory/history').push(entry); 
 }
 
-// SAVE
-function save() {
-    // LocalStorage биш Firebase рүү хадгална
-    db.ref('inventory/items').set(items);
-}
-
-// OPEN DETAIL
-let selectedColor = ""; // Сонгосон өнгийг хадгалах хувьсагч
+let selectedColor = ""; 
 
 function openItem(code) {
+
+    if (!Array.isArray(items)) items = Object.values(items || {});
+
     let item = items.find(i => i.code === code);
     let isAdmin = localStorage.getItem("role") === "admin";
-    if (!item) return;
+    
+    if (!item) {
+        console.error("Бараа олдсонгүй:", code);
+        return;
+    }
 
-    // АЮУЛГҮЙ БАЙДАЛ: Хэрэв variants байхгүй бол үүсгэх
-    if (!item.variants || item.variants.length === 0) {
+    if (!item.variants) {
         item.variants = [{ color: "Үндсэн", branches: item.branches || { b1: 0, b2: 0, b3: 0 } }];
     }
 
+    // 3. Сонгогдсон өнгө байхгүй бол эхний өнгийг авах
     let currentVariant = item.variants.find(v => v.color === selectedColor);
     if (!currentVariant) {
         currentVariant = item.variants[0];
-        selectedColor = currentVariant.color;
+        selectedColor = currentVariant.color; 
     }
 
     let html = `
@@ -78,7 +78,7 @@ function openItem(code) {
             width: 100%; 
             max-width: 400px; 
             margin: 0 auto; 
-            box-sizing: border-box; /* ⬅️ Хэмжээг халихаас хамгаална */
+            box-sizing: border-box; 
             display: flex; 
             flex-direction: column; 
             align-items: center;
@@ -107,7 +107,7 @@ function openItem(code) {
                         color: ${v.color === selectedColor ? 'white' : '#333'};">
                         ${v.color}
                     </button>
-                `).join('') : ''}
+                `).join('') : `<span style="color:#888; font-size:12px;">Өнгө: ${selectedColor}</span>`}
             </div>
 
             <div class="branches" style="width: 100%; box-sizing: border-box;">
@@ -124,6 +124,7 @@ function openItem(code) {
     `;
     document.getElementById("detailContent").innerHTML = html;
     document.getElementById("detailModal").style.display = "flex";
+    document.body.style.overflow = "hidden"; // Дэлгэц гүйлгэхийг зогсооно
 }
 
 function selectColor(code, color) {
@@ -177,13 +178,21 @@ function branchUI(item, variant, key, name) {
 function updateQty(code, color, branch, change) {
     let item = items.find(i => i.code === code);
     let variant = item.variants.find(v => v.color === color);
-    
+
     if (change === -1 && variant.branches[branch] <= 0) return;
 
     askConfirm(change > 0 ? "Нэмэх үү?" : "Хасах уу?", () => {
+
+        // ✅ ТОГТООМЖТОЙ UPDATE
         variant.branches[branch] += change;
+
+        // 🔥 FIREBASE UPDATE (ЭНЭ ЧУХАЛ)
+        db.ref('inventory/items/' + item.id).update({
+            variants: item.variants
+        });
+
         let bNames = { b1: "Минж плаза", b2: "Номин юнайтед", b3: "Ривер" };
-        
+
         saveHistory({
             user: localStorage.getItem("user") || "Хэрэглэгч",
             action: change > 0 ? "Нэмсэн" : "Хассан",
@@ -194,8 +203,8 @@ function updateQty(code, color, branch, change) {
             branchName: bNames[branch],
             time: new Date().toLocaleString()
         });
-        save();
-        openItem(code); // Цонхыг шинэчлэх
+
+        openItem(code);
     });
 }
 
@@ -206,7 +215,6 @@ function addNewColor(code) {
     if (item.variants.some(v => v.color === colorName)) return alert("Энэ өнгө байна!");
     
     item.variants.push({ color: colorName, branches: { b1: 0, b2: 0, b3: 0 } });
-    save();
     selectedColor = colorName;
     openItem(code);
 }
@@ -253,7 +261,6 @@ function add(code, branch){
         time: new Date().toLocaleString()
     });
 
-    save();
     openItem(code);
   });
 }
@@ -282,7 +289,6 @@ function remove(code, branch){
           time: new Date().toLocaleString()
       });
 
-      save();
       openItem(code);
     });
   }
@@ -295,12 +301,11 @@ function addItem() {
     let name = document.getElementById("name").value.trim();
     let code = document.getElementById("code").value.trim();
     let price = document.getElementById("price").value;
-    let category = document.getElementById("cat").value;
+    let catSelect = document.getElementById("cat"); 
+    let category = catSelect ? catSelect.value : "Бусад";
 
-    // Бүх өнгөний input-үүдээс утгыг нь цуглуулж авах
     let colorInputs = document.querySelectorAll(".variant-color");
     let variants = [];
-
     colorInputs.forEach(input => {
         let colorValue = input.value.trim();
         if (colorValue) {
@@ -322,26 +327,33 @@ function addItem() {
     }
 
     let newItem = {
-        name,
-        code,
+        name: name,
+        code: code,
         price: Number(price) || 0,
-        category,
-        variants: variants // "Үндсэн" гэж байхгүй, шууд чиний нэмсэн өнгөнүүд
+        category: category,
+        variants: variants
     };
 
-    items.push(newItem);
-    save();
-    closeModal();
-    showItems();
-    
-    // Формыг анхны байдалд нь оруулах (Цэвэрлэх)
-    document.getElementById("colorContainer").innerHTML = `
-        <div class="color-input-group" style="display:flex; gap:5px; margin-bottom:10px;">
-            <input type="text" class="variant-color" placeholder="Өнгө" style="flex:1; padding:10px;">
-            <button type="button" onclick="this.parentElement.remove()" style="background:#ff3b30; color:white; border:none; padding:10px; border-radius:5px;">X</button>
-        </div>
-    `;
-    alert("Амжилттай нэмэгдлээ!");
+    console.log("Хадгалах гэж буй өгөгдөл:", newItem);
+
+    try {
+        let newRef = db.ref('inventory/items').push();
+        newItem.id = newRef.key; // ID-г оноох
+
+        newRef.set(newItem)
+            .then(() => {
+                console.log("Firebase-д амжилттай хадгалагдлаа");
+                closeModal();
+                alert("Амжилттай нэмэгдлээ!");
+            })
+            .catch((err) => {
+                console.error("Firebase set error:", err);
+                alert("Хадгалахад алдаа гарлаа: " + err.message);
+            });
+    } catch (e) {
+        console.error("Database Ref Error:", e);
+        alert("Firebase холболтын алдаа! db хувьсагчийг шалгана уу.");
+    }
 }
 
 // MODAL
@@ -361,9 +373,11 @@ function closeModal() {
 
 function deleteItem(code) {
     if (!confirm("Энэ барааг бүрмөсөн устгах уу?")) return;
-    items = items.filter(i => i.code !== code);
-    save();
-    showItems();
+
+    let item = items.find(i => i.code === code);
+
+    db.ref('inventory/items/' + item.id).remove();
+
     closeDetail();
 }
 
@@ -460,19 +474,20 @@ function showItems() {
         return;
     }
 
-    filteredItems.forEach(i => {
-        htmlContent += `
-            <div class="card" onclick="openItem('${i.code}')" style="
-                cursor: pointer; background: white; padding: 15px; border-radius: 12px; 
-                margin-bottom: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-                position: relative;
-            ">
-                <h3 style="margin: 0; font-size: 16px;">${i.name}</h3>
-                <p style="color: #007aff; font-weight: bold; margin: 5px 0;">${(i.price || 0).toLocaleString()}₮</p>
-                <small style="color: #888;">Код: ${i.code} | ${i.category}</small>
-            </div>
-        `;
-    });
+    // showItems доторх loop хэсэг:
+filteredItems.forEach(i => {
+    htmlContent += `
+        <div class="card" onclick="selectedColor=''; openItem('${i.code}')" style="
+            cursor: pointer; background: white; padding: 15px; border-radius: 12px; 
+            margin-bottom: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            -webkit-tap-highlight-color: transparent;
+        ">
+            <h3 style="margin: 0; font-size: 16px;">${i.name}</h3>
+            <p style="color: #007aff; font-weight: bold; margin: 5px 0;">${(i.price || 0).toLocaleString()}₮</p>
+            <small style="color: #888;">Код: ${i.code} | ${i.category}</small>
+        </div>
+    `;
+});
 
     div.innerHTML = htmlContent; // Бүх картыг нэг удаа дэлгэцэнд зурна
 }
@@ -564,13 +579,17 @@ function exportToExcel() {
 function checkRole(){
   let role = localStorage.getItem("role");
 
+  // Хэрэв ажилтан бол дараах товчнуудыг хаана
   if(role === "employee"){
-    // ❌ нуух
-    document.getElementById("addBtn").style.display = "none";
-    document.getElementById("excelBtn").style.display = "none";
-    document.getElementById("addBtn").style.display = "none";
-    document.getElementById("excelBtn").style.display = "none";
-    document.getElementById("historyBtn").style.display = "none";
+    const adminElements = [
+      document.getElementById("addBtn"),     // Бараа нэмэх товч
+      document.getElementById("excelBtn"),   // Excel татах товч
+      document.getElementById("historyBtn")  // Түүх харах товч
+    ];
+
+    adminElements.forEach(el => {
+      if(el) el.style.display = "none";
+    });
   }
 }
 
@@ -724,10 +743,16 @@ function saveEdit(code) {
     if (item && newName) {
         item.name = newName;
         item.price = Number(newPrice) || 0;
-        save();
-        showItems();
-        openItem(code);
-        alert("Засагдлаа!");
+
+        // save() гэхийн оронд шууд Firebase рүү:
+        db.ref('inventory/items/' + item.id).update({
+            name: item.name,
+            price: item.price
+        }).then(() => {
+            showItems();
+            openItem(code);
+            alert("Амжилттай засагдлаа!");
+        });
     }
 }
 
@@ -742,15 +767,3 @@ function addColorInput() {
     `;
     container.appendChild(div);
 }
-
-firebase.auth().onAuthStateChanged((user) => {
-    if (user) {
-        console.log("Firebase нэвтрэлт амжилттай!");
-        checkRole(); // 👈 Эрхийг энд шалгана
-        loadFirebaseData(); // 👈 Энэ функц дотор showItems() байгаа учраас давхар дуудах шаардлагагүй
-    } else {
-        if (localStorage.getItem("auth") !== "true") {
-            window.location.href = "index.html";
-        }
-    }
-});
