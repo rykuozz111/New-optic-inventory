@@ -771,7 +771,6 @@ function addColorInput() {
 document.addEventListener("DOMContentLoaded", function() {
     const userRole = localStorage.getItem("role");
 
-    // Зөвхөн Админ үед харагдах элементүүд
     if (userRole === "admin") {
         const adminElements = ["addBtn", "excelBtn", "historyBtn", "userViewBtn"];
         adminElements.forEach(id => {
@@ -779,7 +778,6 @@ document.addEventListener("DOMContentLoaded", function() {
             if (el) el.style.display = "block";
         });
         
-        // Админ байсан ч панелыг анхнаасаа хаалттай (none) байлгах нь зөв
         const panel = document.getElementById("adminPanel");
         if (panel) panel.style.display = "none"; 
     } else {
@@ -793,25 +791,23 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 
 function loadUsers() {
-    // Хэрэв контейнер байхгүй бол функцыг зогсоох (алдаанаас сэргийлнэ)
     const container = document.getElementById("userList");
     if (!container) return;
 
-    console.log("Хэрэглэгчдийн жагсаалтыг татаж байна...");
+    console.log("Firebase-ээс ажилчдыг татаж байна...");
 
-    firebase.database().ref('users').on('value', (snapshot) => {
+    db.ref('users').on('value', (snapshot) => {
         container.innerHTML = "";
         const data = snapshot.val();
 
         if (!data) {
-            container.innerHTML = "<p style='text-align:center; color:#888;'>Бүртгэлтэй ажилтан алга.</p>";
+            container.innerHTML = "<p style='text-align:center; color:#888;'>Бүртгэлтэй ажилтан олдсонгүй.</p>";
+            console.log("Дата хоосон байна (null)");
             return;
         }
 
-        snapshot.forEach((childSnapshot) => {
-            const userData = childSnapshot.val();
-            const userId = childSnapshot.key;
-            
+        Object.keys(data).forEach((userId) => {
+            const userData = data[userId];
             const card = document.createElement("div");
             card.style.cssText = `
                 background: white;
@@ -822,6 +818,7 @@ function loadUsers() {
                 align-items: center;
                 box-shadow: 0 2px 5px rgba(0,0,0,0.05);
                 margin-bottom: 10px;
+                border: 1px solid #eee;
             `;
             
             card.innerHTML = `
@@ -830,12 +827,14 @@ function loadUsers() {
                     <div style="font-size: 11px; color: #8e8e93;">${userData.email || ''}</div>
                 </div>
                 <button onclick="deleteUser('${userId}', '${userData.username}')" 
-                        style="background: #ff3b30; color: white; border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: bold;">
+                        style="background: #ff3b30; color: white; border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-size: 12px;">
                     Устгах
                 </button>
             `;
             container.appendChild(card);
         });
+    }, (error) => {
+        console.error("Firebase-ээс уншихад алдаа гарлаа:", error);
     });
 }
 
