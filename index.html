@@ -113,22 +113,17 @@
             transition: opacity 0.2s;
         }
 
-        .btn-secondary {
-            width: 100%;
-            background: none;
-            border: none;
-            color: var(--primary);
-            font-size: 14px;
-            margin-top: 15px;
-            cursor: pointer;
-            font-weight: 500;
-        }
-
         .btn-primary:active { opacity: 0.8; transform: translateY(1px); }
         
         .loading {
             opacity: 0.6;
             pointer-events: none;
+        }
+
+        .footer-text {
+            font-size: 12px;
+            color: #8e8e93;
+            margin-top: 25px;
         }
     </style>
 </head>
@@ -137,12 +132,12 @@
 <div class="login-box" id="loginForm">
     <div class="logo-area">
         <h1>NEW OPTIC</h1>
-        <p>Тооллогын систэм</p>
+        <p>Тооллогын систем</p>
     </div>
 
     <div class="input-group">
         <label>Хэрэглэгчийн нэр</label>
-        <input id="email" type="text" placeholder="Утасны дугаар" autocomplete="username">
+        <input id="email" type="text" placeholder="Утасны дугаар эсвэл нэр" autocomplete="username">
     </div>
 
     <div class="input-group">
@@ -151,7 +146,10 @@
     </div>
 
     <button class="btn-primary" id="loginBtn" onclick="login()">Нэвтрэх</button>
-    <button class="btn-secondary" onclick="register()">Шинэ хэрэглэгч бүртгэх</button>
+    
+    <div class="footer-text">
+        Зөвхөн эрх бүхий ажилчид нэвтрэх боломжтой.
+    </div>
 </div>
 
 <script>
@@ -171,6 +169,7 @@ function login() {
     btn.innerText = "Уншиж байна...";
     btn.classList.add("loading");
 
+    // Firebase-ийн и-мэйл хэлбэрт шилжүүлэх
     let email = username.includes("@") ? username : username + "@newoptic.mn";
 
     firebase.auth().signInWithEmailAndPassword(email, password)
@@ -178,7 +177,7 @@ function login() {
         localStorage.setItem("auth", "true");
         localStorage.setItem("user", username);
 
-        // Админ шалгах
+        // Админ шалгах (99862122 гэсэн нэрээр орвол админ байна)
         const adminUser = "99862122"; 
         localStorage.setItem("role", username === adminUser ? "admin" : "employee");
 
@@ -190,35 +189,6 @@ function login() {
         alert("Нэвтрэх нэр эсвэл нууц үг буруу байна!");
     });
 }
-
-function register() {
-    let username = document.getElementById("email").value.trim().toLowerCase();
-    let password = document.getElementById("password").value.trim();
-    
-    if(!username || password.length < 6) {
-        alert("Нэр оруулж, нууц үг хамгийн багадаа 6 оронтой байх ёстой!");
-        return;
-    }
-
-    let email = username.includes("@") ? username : username + "@newoptic.mn";
-
-    firebase.auth().createUserWithEmailAndPassword(email, password)
-    .then((userCredential) => {
-        // Database-д хэрэглэгчийн мэдээллийг хадгалах
-        firebase.database().ref('users/' + userCredential.user.uid).set({
-            username: username,
-            email: email,
-            role: "employee", // Анх бүртгүүлэхэд ажилтан эрхтэй байна
-            createdAt: new Date().toISOString()
-        });
-        
-        alert("Ажилтан: '" + username + "' амжилттай бүртгэгдлээ!");
-    })
-    .catch((error) => {
-        alert("Бүртгэхэд алдаа гарлаа: " + error.message);
-    });
-}
-
 </script>
 
 </body>
